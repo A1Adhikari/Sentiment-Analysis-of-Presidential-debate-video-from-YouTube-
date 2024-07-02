@@ -1,0 +1,103 @@
+
+# Installing devtools package
+install.packages('devtools')
+# loading devtools package
+library(devtools)
+# using Devtools to install tuber package from Github
+devtools::install_github("soodoku/tuber", build_vignettes = TRUE)
+
+force=TRUE
+# Load tuber package
+library(tuber)
+
+# set working directory
+setwd("C:/Users/s201962/Documents")
+
+# Authenticate using your YouTube client ID and client secret key
+## Then authenticate in browser
+client_id="type your client ID here"
+client_secret="type your client secret key here" 
+yt_oauth(client_id, client_secret, token='')
+
+# Package for drawing the plots
+install.packages('ggplot2')
+library(ggplot2)
+
+# Package for arranging the plots in grids
+install.packages('gridExtra')
+library(gridExtra)
+# dplyr package for converting character to number
+install.packages('dplyr')
+library(dplyr)
+###########################################################################################################
+# Collect data on a Youtube video - CNN Presidential Debate: President Joe Biden and former President Donald Trump 
+###########################################################################################################
+#Get summary statistics of a video with ID= fmZJ7lhroA8
+get_stats(video_id= "fmZJ7lhroA8")
+
+# Get details about the video
+get_video_details(video_id= "fmZJ7lhroA8")
+
+# get comments on video and save them to dataframe called comments
+comments<-get_comment_threads(c(video_id="fmZJ7lhroA8"))
+#view comments
+View(comments)
+
+############################################################################################################
+# Create wordcloud of the comments
+############################################################################################################
+# Install tm, SnowballC and wordcloud packages for text preprocessing and word clouds
+install.packages('tm')
+library(tm)
+install.packages('SnowballC')
+library(SnowballC)
+install.packages('wordcloud')
+library(wordcloud)
+
+# install syuzhet package for sentiment analysis
+install.packages('syuzhet')
+library(syuzhet)
+# create comment corpus
+comments_corp=Corpus(VectorSource(comments[,4]))
+
+# text processing and create document-term-matrix
+comments_DTM=DocumentTermMatrix(comments_corp,control=list(removePunctuation=T,removeNumbers=T,stopwords=T))
+
+# Display first five terms in DTM
+as.matrix(comments_DTM[,1:5])
+
+# Create matrix of terms and frequency
+comments_terms=colSums(as.matrix(comments_DTM))
+comments_terms_matrix=as.matrix(comments_terms)
+comments_terms_matrix
+
+# Create word cloud
+wordcloud(words=names(comments_terms), min.freq=1, vfont=c('serif', 'bold italic'), colors=brewer.pal(8, "Dark2"))
+
+# Get raw sentiment scores for each comment
+Video_sentiment= get_nrc_sentiment(as.character(comments[, 4]))
+View(Video_sentiment)
+
+# obtain transpose of dataframe
+Video_sentimentDF=t(data.frame(Video_sentiment))
+View(Video_sentimentDF)
+
+# calculate number of comments with each emotions >0
+VideoCommentsEmotionsDFCount=data.frame(rownames(Video_sentimentDF), rowSums(Video_sentimentDF > 0))
+View(VideoCommentsEmotionsDFCount)
+# set the row names to null
+rownames(VideoCommentsEmotionsDFCount)=NULL
+# set the column names to 'emotion', and ;frequency'
+colnames(VideoCommentsEmotionsDFCount)= c('Emotion', 'Frequency')
+View(VideoCommentsEmotionsDFCount)
+
+# Barplot of Youtube video comment sentiments
+barplot(VideoCommentsEmotionsDFCount$Frequency, names.arg= VideoCommentsEmotionsDFCount$Emotion, main="Youtube Video Comments Sentiment", xlab = "Emotions", ylab="Frequency", las = 2, 
+        cex.names = 1)
+
+# Obtain a single sentiment score for each comment 
+# where the positive values indicate the positive sentiment whereas negative values indicate negative sentiment.
+VideoCommentPolarity= get_sentiment(as.character(comments[,4]))
+View(VideoCommentPolarity)
+
+
